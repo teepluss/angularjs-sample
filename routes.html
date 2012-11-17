@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html ng-app="routeApp">
+<head>
+	<title>AngularJS Routes by Tee++;</title>
+	<!-- AngularJS -->
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.0.2/angular.min.js"></script>
+	
+	<!-- jQuery -->
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+	
+	<!-- Twitter Bootstrap -->
+	<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+	<style type="text/css">
+		body { margin-top: 40px; }
+	</style>
+</head>
+<body ng-controller="MainCtrl">
+
+	<div class="navbar navbar-inverse navbar-fixed-top">
+		<div class="navbar-inner">
+			<div class="container">
+				<a class="brand" href="#/home.html">Home</a>
+				<div class="nav-collapse collapse">
+					<ul class="nav">
+						<li class="" ng-repeat="nav in navs">
+							<a href="{{ nav.href }}">{{ nav.text }}</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div class="container">
+		<div class="page-header">
+			<h1>
+				AngularJS Routes Example
+			</h1>			
+		</div>
+		<div ng-view></div>
+	</div>
+	
+	<script type="text/ng-template" id="partials/home.html">
+    	<h2>Home</h2>
+    </script>
+    
+    <script type="text/ng-template" id="partials/blog.html">
+    	<h2>Blogs</h2>
+    	<div class="media" ng-repeat="n in [] | range:5">
+			<a class="pull-left" href="#/blog/{{ n }}">
+				<img class="media-object" src="http://placehold.it/64x64">
+			</a>
+			<div class="media-body">
+				<h4 class="media-heading">Media heading</h4>
+				Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin commodo. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
+			</div>
+	   </div>
+    </script>
+    
+    <script type="text/ng-template" id="partials/blogDetail.html">
+    	<h2>Blogs Detail</h2>
+    	<div class="well">
+	    	<strong>Blog ID: {{ id }}</strong>
+	    	<div>
+	    		<a href="" ng-click="youAreClick('star')"><i class="icon-star"></i></a>
+	    		<a href="" ng-click="youAreClick('tag')"><i class="icon-tag"></i></a>
+	    		<a href="" ng-click="youAreClick('share')"><i class="icon-share"></i></a>
+	    	</div>
+    	</div>
+    </script>
+    
+    <script type="text/ng-template" id="partials/product.html">
+    	<h2>Products</h2>
+    	<ul class="thumbnails">
+			<li class="span{{ item.grid }}" ng-repeat="item in items">
+				<a href="" class="thumbnail">
+					<img ng-src="http://placehold.it/{{ item.filename }}" alt="">
+				</a>
+			</li>
+		</ul>
+    </script>
+	
+	<script type="text/ng-template" id="partials/about.html">
+		<h2>About</h2>
+		<iframe width="700" height="400" src="{{ video }}" frameborder="0" allowfullscreen></iframe>
+	</script>
+	
+	<script type="text/ng-template" id="partials/contact.html">
+		<h2>Contact</h2>
+		<textarea rows="3"></textarea>
+	</script>
+	
+	
+	<script>
+		var routeApp = angular.module('routeApp', []);
+		
+		routeApp.filter('range', function() {
+			return function(input, total) {
+				total = parseInt(total);
+				for (var i=0; i<total; i++) {
+					input.push(i);
+				}
+				return input;
+			};
+		});
+		
+		routeApp.config(function($routeProvider, $locationProvider) {
+			
+			$routeProvider.
+				when('/home', { controller: HomeCtrl, templateUrl: 'partials/home.html' }).
+				when('/blog', { controller: BlogCtrl, templateUrl: 'partials/blog.html' }).
+				when('/blog/:id', { controller: BlogDetailCtrl, templateUrl: 'partials/blogDetail.html' }).
+				when('/product', { controller: ProductCtrl, templateUrl: 'partials/product.html' }).				
+				when('/about', { controller: AboutCtrl, templateUrl: 'partials/about.html' }).
+				when('/contact', { controller: ContactCtrl, templateUrl: 'partials/contact.html' }).
+				otherwise({ redirectTo: '/home' });
+				
+			$locationProvider.html5Mode(false);
+			
+		});
+		
+		function MainCtrl($scope) {
+			
+			$scope.navs = [
+				{ text: 'Blogs', href: '#/blog' },
+				{ text: 'Products', href: '#/product' },				
+				{ text: 'About', href: '#/about' },
+				{ text: 'Contact', href: '#/contact' }
+			];
+			
+		}
+		
+		function HomeCtrl($scope) {			
+			console.log($scope);			
+		}
+		
+		function BlogCtrl($scope) {
+			console.log($scope);	
+		}
+		
+		function BlogDetailCtrl($scope, $routeParams) {
+			$scope.id = $routeParams.id;
+			
+			$scope.youAreClick = function(what) {
+				alert('You are click on ' + what);
+			}
+		}
+		
+		function ProductCtrl($scope) {			
+			$scope.items = [
+				{ grid: 4, filename: '360x270' },
+				{ grid: 3, filename: '260x120' },
+				{ grid: 2, filename: '160x120' },
+				{ grid: 3, filename: '260x120' },
+				{ grid: 2, filename: '260x120' } 
+			];			
+		}		
+		
+		function AboutCtrl($scope) {			
+			$scope.video = 'http://www.youtube.com/embed/8DnKOc6FISU';			
+		}
+		
+		function ContactCtrl($scope) {			
+			console.log($scope);			
+		}
+		
+	</script>
+	
+</body>
+</html>

@@ -13,6 +13,9 @@
 	
 	<!-- Custom Style -->
 	<style type="text/css">
+	
+		/*.editableOff .frontMode { display:none; }*/
+	
 		.unstyled { list-style-type: none; }
 		.unstyled li { margin: 0px; padding: 0px; }
 		.unstyled li .action { visibility: hidden; }
@@ -20,13 +23,15 @@
 		.todo-done-true { text-decoration: line-through; color: gray; }		
 	</style>
 </head>
-<body ng-app="todos">
+<body ng-app="todos" ng-controller="MainCtrl">
 
 	<div class="container">
 
 		<div ng-controller="TodoCtrl">
 			<div class="page-header">
-				<h1>AngularJS Todos Example</h1>
+				<h1>
+					AngularJS Todos Example [<a href="" ng-click="turnTo('on')">On</a> | <a href="" ng-click="turnTo('off')">Off</a>]
+				</h1>
 			</div>
 			<div class="well">
 				<h4>
@@ -42,28 +47,30 @@
 									<input type="checkbox" ng-model="todo.done" ng-click="editTodo(todo)">
 									<span ng-hide="todo.editEnabled" class="todo-done-{{ todo.done }}">{{ todo.text }}</span>					
 								</label>
-								<content-editable ng-show="todo.editEnabled" style="position:absolute;top:-2px;left:20px;"></content-editable>
+								<content-form-edit ng-show="todo.editEnabled" style="position:absolute;top:-2px;left:20px;"></content-editable>
 							</div>
-							<div class="pull-left span8 action">
-								<a href="" ng-click="toggleEditableForm(todo)"><i class="icon-edit"></i></a>
-								<a href="" ng-click="deleteTodo(todo)"><i class="icon-trash"></i></a>
-							</div>
+							<content-form-action ng-show="editable"></content-form-action>
 						</div>
 					</li>
 				</ul>
 
-		
-				<form ng-submit="addTodo()" class="form-inline">
-					<input type="text" ng-model="todo.text" size="30" placeholder="add new todo here">
-					<input class="btn btn-primary" type="submit" value="add">
-				</form>
+				<content-form-add ng-show="editable"></content-form-add>
+				
 			</div>			
 		</div>
 		
 	</div>
 	
 	<script>		
+
 		var todoApp = angular.module('todos', []);
+		
+		function MainCtrl($scope) {
+			$scope.editable = true;			
+			$scope.turnTo = function(state) {				
+				$scope.editable = (state === 'on') ? true : false;	
+			}			
+		}
 		
 		todoApp.directive('ngEnter', function() {
 		    return function(scope, elm, attrs) {
@@ -71,10 +78,35 @@
 		            if (e.charCode === 13) scope.$apply(attrs.ngEnter);
 		        });
 		    };
-		});    
-
+		});
 		
-		todoApp.directive('contentEditable', function($compile) {
+		todoApp.directive('contentFormAction', function() {
+			return {
+				restrict: 'E',
+				replace: true,
+				template: '\
+					<div class="pull-left span8 action">\
+						<a href="" ng-click="toggleEditableForm(todo)"><i class="icon-edit"></i></a>\
+						<a href="" ng-click="deleteTodo(todo)"><i class="icon-trash"></i></a>\
+					</div>\
+				'
+			}
+		});
+		
+		todoApp.directive('contentFormAdd', function() {
+			return {
+				restrict: 'E',
+				replace: true,
+				template: '\
+					<form ng-submit="addTodo()" class="form-inline">\
+						<input type="text" ng-model="todo.text" size="30" placeholder="add new todo here" required>\
+						<input class="btn btn-primary" type="submit" value="add">\
+					</form>\
+				'
+			}
+		});
+		
+		todoApp.directive('contentFormEdit', function($compile) {
 		
 			var linker = function(scope, element, attrs) {		
 				//value="' + scope.todo.text + '"
@@ -151,7 +183,7 @@
 			
 		}]);
 		
-		todoApp.service('Store', function() {
+		todoApp.factory('Store', function() {
 			return {
 				query: function() {
 					var nodes = [];
