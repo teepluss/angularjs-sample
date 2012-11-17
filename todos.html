@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>AngularJS Todos with Local Storage by Tee++;</title>
+	<!-- AngularJS -->
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.0.2/angular.min.js"></script>
+	
+	<!-- jQuery -->
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+	
+	<!-- Twitter Bootstrap -->
+	<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+	
+	<!-- Custom Style -->
+	<style type="text/css">
+		.unstyled { list-style-type: none; }
+		.unstyled li { margin: 0px; padding: 0px; }
+		.unstyled li .action { visibility: hidden; }
+		.unstyled li:hover .action { visibility: visible; }
+		.todo-done-true { text-decoration: line-through; color: gray; }		
+	</style>
+</head>
+<body ng-app="todos">
+
+	<div class="container">
+
+		<div ng-controller="TodoCtrl">
+			<div class="page-header">
+				<h1>AngularJS Todos Example</h1>
+			</div>
+			<div class="well">
+				<h4>
+					{{ getRemaining() }} of {{ getTotalTodos() }} remaining
+					[<a href="" ng-click="archive()">archive</a>]
+				</h4>
+			
+				<ul ng-repeat="todo in todos" class="unstyled">
+					<li class="clearfix">
+						<div class="row-fluid">
+							<div class="pull-left span4" style="position:relative">
+								<label class="checkbox">
+									<input type="checkbox" ng-model="todo.done" ng-click="editTodo(todo)">
+									<span ng-hide="todo.editEnabled" class="todo-done-{{ todo.done }}">{{ todo.text }}</span>					
+								</label>
+								<content-editable ng-show="todo.editEnabled" style="position:absolute;top:-2px;left:20px;"></content-editable>
+							</div>
+							<div class="pull-left span8 action">
+								<a href="" ng-click="toggleEditableForm(todo)"><i class="icon-edit"></i></a>
+								<a href="" ng-click="deleteTodo(todo)"><i class="icon-trash"></i></a>
+							</div>
+						</div>
+					</li>
+				</ul>
+
+		
+				<form ng-submit="addTodo()" class="form-inline">
+					<input type="text" ng-model="todo.text" size="30" placeholder="add new todo here">
+					<input class="btn btn-primary" type="submit" value="add">
+				</form>
+			</div>			
+		</div>
+		
+	</div>
+	
+	<script>		
+		var todoApp = angular.module('todos', []);
+		
+		todoApp.directive('ngEnter', function() {
+		    return function(scope, elm, attrs) {
+		        elm.bind('keypress', function(e) {
+		            if (e.charCode === 13) scope.$apply(attrs.ngEnter);
+		        });
+		    };
+		});    
+
+		
+		todoApp.directive('contentEditable', function($compile) {
+		
+			var linker = function(scope, element, attrs) {		
+				//value="' + scope.todo.text + '"
+				element.html('<input type="text" style="margin:0;padding:2px" ng-model="todo.text" ng-enter="editTodo(todo)">');
+				$compile(element.contents())(scope);
+			}
+			
+			return {
+				restrict: 'E',
+				replace: true,
+				link: linker
+			}
+		});
+
+		todoApp.controller('TodoCtrl', ['$scope', 'Store', function($scope, $store) {
+
+			$scope.todos = $store.query();
+		
+			$scope.getRemaining = function() {
+				remain = $.grep($scope.todos, function(todo) {
+					return !todo.done;
+				});
+				
+				return remain.length;
+			}
+			
+			$scope.getTotalTodos = function() {
+				return $scope.todos.length;
+			}
+			
+			$scope.toggleEditableForm = function(todo) {
+				todo.editEnabled = (todo.editEnabled) ? false : true;
+			}
+			
+			$scope.addTodo = function() {
+			
+				var todo = {
+					text: $scope.todo.text,
+					done: false
+				}
+			
+				$scope.todos.push(todo);
+				
+				// save to storage
+				$store.save(todo);
+				
+				$scope.todo.text = '';
+			}
+			
+			$scope.editTodo = function(todo) {
+				todo.editEnabled = false;				
+				$store.save(todo)
+			}
+			
+			$scope.deleteTodo = function(todo) {
+				$scope.todos.splice($scope.todos.indexOf(todo), 1);
+				$store.delete(todo.id);
+			}
+			
+			$scope.archive = function() {
+				/*$scope.todos = $.grep($scope.todos, function(todo) {
+					return !todo.done;
+				});*/
+				
+				$scope.todos = $.map($scope.todos, function(todo, i) {
+					if (todo.done === true) {
+						$store.delete(todo.id);
+					}
+					else {
+						return todo;
+					}
+				});				
+			}
+			
+		}]);
+		
+		todoApp.service('Store', function() {
+			return {
+				query: function() {
+					var nodes = [];
+					for (var key in localStorage) {
+						if (key.indexOf('todo_') == 0) {
+							nodes.push(JSON.parse(localStorage[key]));
+						}
+					}
+					
+					return nodes;
+				},
+				get: function(id) {
+					if (localStorage['todo_' + id]) {
+						return JSON.parse(localStorage['todo_' + id]);
+					}
+				},
+				delete: function(id) {
+					localStorage.removeItem('todo_' + id);
+				},
+				save: function(node) {
+					if (!node.hasOwnProperty('id')) {
+
+						var nodes = this.query();
+						var highest = 0;
+						
+						for (var i = 0; i < nodes.length; i++) {
+							if (nodes[i].id > highest) {
+								highest = nodes[i].id;
+							}
+						}
+						node.id = ++highest;
+					}					
+					node.updated_at = new Date();
+					localStorage['todo_' + node.id] = JSON.stringify(node);
+				}
+			}
+		});		
+	</script>
+	
+</body>
+</html>	
